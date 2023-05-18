@@ -20,8 +20,9 @@ class ScaffoldDecorator:
         self._attachment_points = AttachmentPoints()
         self._conversion = Conversions()
 
-        df_dict = {"SMILES": [], "Scaffold": [], "Decorations": [], "Likelihoods": []}
-        self._decorated_scaffolds = pd.DataFrame(df_dict)
+        self._df_dict = {"SMILES": [], "Scaffold": [], "Decorations": [], "Likelihoods": []}
+        self._decorated_scaffolds = []
+        self._samples = []
 
         filter_types = FilterTypesEnum()
         config = FilterConfiguration(name=filter_types.GET_LARGEST_FRAGMENT, parameters={})
@@ -42,19 +43,18 @@ class ScaffoldDecorator:
         for sample in sampled_sequences:
             scaffold = self._attachment_points.add_attachment_point_numbers(sample.scaffold, canonicalize=False)
             molecule = self._bond_maker.join_scaffolds_and_decorations(scaffold, sample.decoration)
-
+            self._samples.append(sample)
             if molecule:
                 smile = self._conversion.mol_to_smiles(molecule, isomericSmiles=False, canonical=False)
 
-                series = pd.Series([smile, sample.scaffold, sample.decoration, sample.nll],
-                                   index=['SMILES', 'Scaffold', 'Decorations', 'Likelihoods'])
-
-                self._decorated_scaffolds = self._decorated_scaffolds.append(series, ignore_index=True)
+                series = [smile, sample.scaffold, sample.decoration, sample.nll]
+                self._decorated_scaffolds.append(series)
             else:
-                self._logger.log_message(f"Invalid decorations: {sample.decoration} for scaffold {sample.scaffold}")
+                print(f"Invalid decorations: {sample.decoration} for scaffold {sample.scaffold}")
 
-        self._logger.log_message(f"Sampled {len(self._decorated_scaffolds)} scaffolds in total")
+        print(f"Sampled {len(self._decorated_scaffolds)} scaffolds in total")
         # self._logger.log_timestep(self._decorated_scaffolds['SMILES'].values,
         #                           self._decorated_scaffolds['Likelihoods'].values,,
-
-        self._decorated_scaffolds.to_csv(self._configuration.output_path, index=False)
+        self._decorated_scaffolds = pd.DataFrame(self._decorated_scaffolds, columns=self._df_dict.keys())
+        self._decorated_scaffolds.to_csv(self._configuration.output_path)
+        return self._decorated_scaffolds
