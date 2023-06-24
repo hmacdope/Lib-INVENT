@@ -4,7 +4,7 @@ import numpy as np
 from reinvent_chemistry.library_design import FragmentReactions
 
 from reaction_filters.base_reaction_filter import BaseReactionFilter
-from running_modes.configurations.reaction_filter_configuration import ReactionFilterConfiguration
+from .reaction_filter_configuration import ReactionFilterConfiguration
 
 
 class SelectiveFilter(BaseReactionFilter):
